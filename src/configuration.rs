@@ -180,6 +180,13 @@ pub struct Configuration {
     /// defaults snap back on every tool switch. Spotlight darkness
     /// is unaffected — it's already global per-session.
     sticky_session_defaults: bool,
+    /// When true (default), the size slider persists across launches:
+    /// every user size change is written to `state.toml` and each tool
+    /// reopens at the size it was last used at (falling back to the
+    /// last size used by any tool, then `Size::XSmall`). When false,
+    /// the upstream behaviour applies — saved default, else Medium.
+    /// `annotation-size-factor` still scales whatever size is chosen.
+    remember_last_size: bool,
     /// Whether crop-driven content-size changes resize the editor window
     /// around the cropped content. This is config.toml-backed and defaults
     /// to true.
@@ -776,6 +783,9 @@ impl Configuration {
         if let Some(v) = general.sticky_session_defaults {
             self.sticky_session_defaults = v;
         }
+        if let Some(v) = general.remember_last_size {
+            self.remember_last_size = v;
+        }
         // --- deprecated options ---
         if let Some(v) = general.right_click_copy
             && v
@@ -1242,6 +1252,10 @@ impl Configuration {
         Ok(())
     }
 
+    pub fn remember_last_size(&self) -> bool {
+        self.remember_last_size
+    }
+
     pub fn resize_window_to_content_on_crop(&self) -> bool {
         self.resize_window_to_content_on_crop
     }
@@ -1408,6 +1422,7 @@ impl Default for Configuration {
             close_on_save: false,
             hide_default_palette: false,
             sticky_session_defaults: false,
+            remember_last_size: true,
             resize_window_to_content_on_crop: true,
             fixed_canvas: false,
             layer_panel_shortcut: "ctrl+l".into(),
@@ -1700,6 +1715,7 @@ struct ConfigurationFileGeneral {
     close_on_save: Option<bool>,
     hide_default_palette: Option<bool>,
     sticky_session_defaults: Option<bool>,
+    remember_last_size: Option<bool>,
     /// Deprecated: manual scroll capture no longer moves the pointer at
     /// all, and automatic capture always parks it exactly once. Still
     /// parsed (`deny_unknown_fields`) so configs that set it keep
@@ -1845,6 +1861,7 @@ mod tests {
              close-on-save = true\n\
              hide-default-palette = true\n\
              sticky-session-defaults = true\n\
+             remember-last-size = false\n\
              park-pointer-during-manual-scroll-capture = false\n\
              resize-window-to-content-on-crop = false\n",
         );
@@ -1857,6 +1874,7 @@ mod tests {
         assert!(config.close_on_copy());
         assert!(config.close_on_save());
         assert!(config.hide_default_palette());
+        assert!(!config.remember_last_size());
         assert!(config.sticky_session_defaults());
         assert!(!config.resize_window_to_content_on_crop());
     }

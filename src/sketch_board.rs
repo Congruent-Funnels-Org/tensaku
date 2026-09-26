@@ -6467,12 +6467,10 @@ impl Component for SketchBoard {
 
         // Seed `style.size` from the initial tool's saved per-tool
         // default so the very first drag-to-draw is at the user's
-        // preferred size for that tool. Falls back to Style::default()
-        // (Medium) when nothing has been saved yet.
+        // preferred size for that tool (see `state::initial_size_for_tool`
+        // for the remember-last-size fallback chain).
         let initial_tool = config.initial_tool();
-        let initial_size = crate::state::load_size_for_tool(initial_tool)
-            .or_else(|| initial_tool.builtin_default_size())
-            .unwrap_or_default();
+        let initial_size = crate::state::initial_size_for_tool(initial_tool);
 
         // Layer panel scaffold. Built up-front so the view! macro can
         // pin the Paned via `#[local_ref]`. Starts hidden (panel
