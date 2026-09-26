@@ -5144,9 +5144,7 @@ impl StyleToolbar {
         {
             return s;
         }
-        crate::state::load_size_for_tool(tool)
-            .or_else(|| tool.builtin_default_size())
-            .unwrap_or_default()
+        crate::state::initial_size_for_tool(tool)
     }
 
     fn refresh_brush_smooth_slider_marks(&self) {
@@ -5795,6 +5793,7 @@ impl Component for StyleToolbar {
                 // SyncFromSelection / SyncMultiAgreement, not here.)
                 if !matches!(self.current_tool, Tools::Pointer | Tools::Crop) {
                     self.session_size_per_tool.insert(self.current_tool, size);
+                    crate::state::save_last_size(self.current_tool, size);
                 }
             }
             StyleToolbarInput::SyncToToolDefault => {
@@ -5844,6 +5843,7 @@ impl Component for StyleToolbar {
                 // pick up the user's already-made adjustments.
                 if !matches!(self.current_tool, Tools::Pointer | Tools::Crop) {
                     self.session_size_per_tool.insert(self.current_tool, size);
+                    crate::state::save_last_size(self.current_tool, size);
                 }
                 sender
                     .output_sender()
@@ -6062,9 +6062,7 @@ impl Component for StyleToolbar {
 
         // create model
         let initial_tool = APP_CONFIG.read().initial_tool();
-        let initial_size = crate::state::load_size_for_tool(initial_tool)
-            .or_else(|| initial_tool.builtin_default_size())
-            .unwrap_or_default();
+        let initial_size = crate::state::initial_size_for_tool(initial_tool);
         let mut model = StyleToolbar {
             visible: !APP_CONFIG.read().default_hide_toolbars(),
             current_tool: initial_tool,

@@ -48,6 +48,14 @@ pub struct PersistedState {
     /// live value isn't persisted on every drag.
     #[serde(default)]
     pub size_per_tool: HashMap<Tools, Size>,
+    /// Last size the user picked per tool (slider drag or wheel resize),
+    /// auto-saved on every change when `remember-last-size` is on.
+    #[serde(default)]
+    pub last_size_per_tool: HashMap<Tools, Size>,
+    /// Last size the user picked with any tool — the fallback for a tool
+    /// that has never been used yet.
+    #[serde(default)]
+    pub last_size: Option<Size>,
     /// Last-chosen arrow geometry (Standard / Pointy / Curved / Double).
     /// Auto-saved on every selection so re-opening the Arrow tool
     /// picks up where the user left off.
@@ -542,6 +550,50 @@ pub fn save_size_for_tool(tool: Tools, size: Size) {
     save(&state);
 }
 
+/// Record `size` as the last size the user chose for `tool` (and
+/// globally). No-op unless `remember-last-size` is on, and skipped when
+/// nothing changed so a slider drag doesn't rewrite the file per tick.
+pub fn save_last_size(tool: Tools, size: Size) {
+    if !crate::configuration::APP_CONFIG.read().remember_last_size() {
+        return;
+    }
+    let mut state = load();
+    if state.last_size_per_tool.get(&tool) == Some(&size) && state.last_size == Some(size) {
+        return;
+    }
+    state.last_size_per_tool.insert(tool, size);
+    state.last_size = Some(size);
+    save(&state);
+}
+
+/// The size `tool` should start at (launch or tool switch, ignoring
+/// in-session memory). With `remember-last-size` on: this tool's last
+/// size, then its saved default, then its built-in default, then the
+/// last size used by any tool, then `Size::XSmall`. Off: upstream order
+/// (saved default, built-in, `Size::default()`).
+pub fn initial_size_for_tool(tool: Tools) -> Size {
+    let state = load();
+    let saved = state
+        .size_per_tool
+        .get(&tool)
+        .copied()
+        .or_else(|| tool.builtin_default_size());
+    if !crate::configuration::APP_CONFIG.read().remember_last_size() {
+        return saved.unwrap_or_default();
+    }
+    resolve_remembered_size(&state, tool, saved)
+}
+
+fn resolve_remembered_size(state: &PersistedState, tool: Tools, saved: Option<Size>) -> Size {
+    state
+        .last_size_per_tool
+        .get(&tool)
+        .copied()
+        .or(saved)
+        .or(state.last_size)
+        .unwrap_or(Size::XSmall)
+}
+
 pub fn load_arrow_style() -> Option<ArrowStyle> {
     load().arrow_style
 }
@@ -625,6 +677,59 @@ pub fn save_custom_colors(slots: &[Option<Color>]) {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn remembered_size_fallback_chain() {
+        use super::{PersistedState, resolve_remembered_size};
+        use crate::style::Size;
+        use crate::tools::Tools;
+
+        let mut state = PersistedState::default();
+        // First-ever run: nothing remembered, nothing saved -> X-Small.
+        assert_eq!(
+            resolve_remembered_size(&state, Tools::Arrow, None),
+            Size::XSmall
+        );
+        // A saved / built-in default beats the global fallback.
+        assert_eq!(
+            resolve_remembered_size(&state, Tools::Marker, Some(Size::Small)),
+            Size::Small
+        );
+        // Last size used anywhere seeds a never-used tool.
+        state.last_size = Some(Size::Large);
+        assert_eq!(
+            resolve_remembered_size(&state, Tools::Arrow, None),
+            Size::Large
+        );
+        // The tool's own last size wins over everything.
+        state.last_size_per_tool.insert(Tools::Arrow, Size::Small);
+        assert_eq!(
+            resolve_remembered_size(&state, Tools::Arrow, Some(Size::XLarge)),
+            Size::Small
+        );
+    }
+
+    #[test]
+    fn last_size_round_trips_through_toml() {
+        use super::PersistedState;
+        use crate::style::Size;
+        use crate::tools::Tools;
+
+        let mut state = PersistedState {
+            last_size: Some(Size::XSmall),
+            ..Default::default()
+        };
+        state
+            .last_size_per_tool
+            .insert(Tools::Rectangle, Size::Medium);
+        let text = toml::to_string(&state).unwrap();
+        let back: PersistedState = toml::from_str(&text).unwrap();
+        assert_eq!(back.last_size, Some(Size::XSmall));
+        assert_eq!(
+            back.last_size_per_tool.get(&Tools::Rectangle),
+            Some(&Size::Medium)
+        );
+    }
+
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
 
