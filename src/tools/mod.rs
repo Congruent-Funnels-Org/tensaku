@@ -1369,10 +1369,11 @@ impl Tools {
 
     /// Starting annotation size for a tool when the user has saved no
     /// per-tool default. `None` means "use the global default"
-    /// (Medium); Counters read best at the small size.
+    /// (Medium); Counters read best at the small size (X-Small since the
+    /// KAN-2499 recalibration, which moved every step up one notch).
     pub fn builtin_default_size(&self) -> Option<crate::style::Size> {
         match self {
-            Tools::Marker => Some(crate::style::Size::Small),
+            Tools::Marker => Some(crate::style::Size::XSmall),
             _ => None,
         }
     }

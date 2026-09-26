@@ -56,6 +56,10 @@ pub struct PersistedState {
     /// that has never been used yet.
     #[serde(default)]
     pub last_size: Option<Size>,
+    /// Which size scale the stored sizes above use (see
+    /// `SIZE_SCALE_VERSION`). Missing = v1, the upstream scale.
+    #[serde(default)]
+    pub size_scale_version: Option<u32>,
     /// Last-chosen arrow geometry (Standard / Pointy / Curved / Double).
     /// Auto-saved on every selection so re-opening the Arrow tool
     /// picks up where the user left off.
@@ -136,13 +140,25 @@ fn state_path() -> Option<PathBuf> {
 }
 
 pub fn load() -> PersistedState {
+    let fresh = || PersistedState {
+        size_scale_version: Some(SIZE_SCALE_VERSION),
+        ..Default::default()
+    };
     let Some(path) = state_path() else {
-        return PersistedState::default();
+        return fresh();
     };
     let Ok(content) = fs::read_to_string(&path) else {
-        return PersistedState::default();
+        return fresh();
     };
-    toml::from_str(&content).unwrap_or_default()
+    let Ok(mut state) = toml::from_str::<PersistedState>(&content) else {
+        return fresh();
+    };
+    // Sizes saved under the old scale are stepped down in memory on every
+    // read until the next `save` persists them stamped with the new
+    // version — never written from here, so reading stays side-effect
+    // free (and an empty file mid-write can't be "migrated" over).
+    migrate_size_scale(&mut state);
+    state
 }
 
 fn save(state: &PersistedState) {
@@ -568,30 +584,54 @@ pub fn save_last_size(tool: Tools, size: Size) {
 
 /// The size `tool` should start at (launch or tool switch, ignoring
 /// in-session memory). With `remember-last-size` on: this tool's last
-/// size, then its saved default, then its built-in default, then the
-/// last size used by any tool, then `Size::XSmall`. Off: upstream order
+/// size, then its saved default, then the last size used by any tool,
+/// then its built-in default, then `Size::XSmall`. Off: upstream order
 /// (saved default, built-in, `Size::default()`).
 pub fn initial_size_for_tool(tool: Tools) -> Size {
     let state = load();
-    let saved = state
-        .size_per_tool
-        .get(&tool)
-        .copied()
-        .or_else(|| tool.builtin_default_size());
     if !crate::configuration::APP_CONFIG.read().remember_last_size() {
-        return saved.unwrap_or_default();
+        return state
+            .size_per_tool
+            .get(&tool)
+            .copied()
+            .or_else(|| tool.builtin_default_size())
+            .unwrap_or_default();
     }
-    resolve_remembered_size(&state, tool, saved)
+    resolve_remembered_size(&state, tool)
 }
 
-fn resolve_remembered_size(state: &PersistedState, tool: Tools, saved: Option<Size>) -> Size {
+fn resolve_remembered_size(state: &PersistedState, tool: Tools) -> Size {
     state
         .last_size_per_tool
         .get(&tool)
+        .or_else(|| state.size_per_tool.get(&tool))
         .copied()
-        .or(saved)
         .or(state.last_size)
+        .or_else(|| tool.builtin_default_size())
         .unwrap_or(Size::XSmall)
+}
+
+/// Size-scale generation written by this build. v2 = KAN-2499: every
+/// step's pixels moved up one notch (new Medium = old Large), so sizes
+/// saved under v1 step down one to keep the same pixels on screen.
+const SIZE_SCALE_VERSION: u32 = 2;
+
+/// Rewrite v1 sizes into the v2 scale. Old X-Small has no smaller
+/// equivalent and stays X-Small. Returns true when `state` changed.
+fn migrate_size_scale(state: &mut PersistedState) -> bool {
+    if state.size_scale_version.unwrap_or(1) >= SIZE_SCALE_VERSION {
+        return false;
+    }
+    for size in state
+        .size_per_tool
+        .values_mut()
+        .chain(state.last_size_per_tool.values_mut())
+        .chain(state.last_size.iter_mut())
+    {
+        *size = size.step_down();
+    }
+    state.size_scale_version = Some(SIZE_SCALE_VERSION);
+    true
 }
 
 pub fn load_arrow_style() -> Option<ArrowStyle> {
@@ -685,27 +725,51 @@ mod tests {
 
         let mut state = PersistedState::default();
         // First-ever run: nothing remembered, nothing saved -> X-Small.
-        assert_eq!(
-            resolve_remembered_size(&state, Tools::Arrow, None),
-            Size::XSmall
-        );
-        // A saved / built-in default beats the global fallback.
-        assert_eq!(
-            resolve_remembered_size(&state, Tools::Marker, Some(Size::Small)),
-            Size::Small
-        );
-        // Last size used anywhere seeds a never-used tool.
+        assert_eq!(resolve_remembered_size(&state, Tools::Arrow), Size::XSmall);
+        // Built-in default applies only before anything is remembered.
+        assert_eq!(resolve_remembered_size(&state, Tools::Marker), Size::XSmall);
+        // Last size used anywhere seeds every never-used tool, Marker too.
         state.last_size = Some(Size::Large);
-        assert_eq!(
-            resolve_remembered_size(&state, Tools::Arrow, None),
-            Size::Large
-        );
-        // The tool's own last size wins over everything.
+        assert_eq!(resolve_remembered_size(&state, Tools::Arrow), Size::Large);
+        assert_eq!(resolve_remembered_size(&state, Tools::Marker), Size::Large);
+        // A saved default beats the global fallback...
+        state.size_per_tool.insert(Tools::Arrow, Size::XLarge);
+        assert_eq!(resolve_remembered_size(&state, Tools::Arrow), Size::XLarge);
+        // ...and the tool's own last size wins over everything.
         state.last_size_per_tool.insert(Tools::Arrow, Size::Small);
-        assert_eq!(
-            resolve_remembered_size(&state, Tools::Arrow, Some(Size::XLarge)),
-            Size::Small
-        );
+        assert_eq!(resolve_remembered_size(&state, Tools::Arrow), Size::Small);
+    }
+
+    #[test]
+    fn size_scale_migration_steps_down_once() {
+        use super::{PersistedState, SIZE_SCALE_VERSION, migrate_size_scale};
+        use crate::style::Size;
+        use crate::tools::Tools;
+
+        let mut state: PersistedState = toml::from_str(
+            "last-size = \"large\"\n\
+             [last-size-per-tool]\narrow = \"large\"\nbrush = \"x-small\"\n\
+             [size-per-tool]\nmarker = \"x-x-large\"\n",
+        )
+        .unwrap();
+        assert!(migrate_size_scale(&mut state));
+        assert_eq!(state.last_size, Some(Size::Medium));
+        assert_eq!(state.last_size_per_tool[&Tools::Arrow], Size::Medium);
+        assert_eq!(state.last_size_per_tool[&Tools::Brush], Size::XSmall);
+        assert_eq!(state.size_per_tool[&Tools::Marker], Size::XLarge);
+        assert_eq!(state.size_scale_version, Some(SIZE_SCALE_VERSION));
+        // Second pass is a no-op.
+        assert!(!migrate_size_scale(&mut state));
+        assert_eq!(state.last_size, Some(Size::Medium));
+    }
+
+    #[test]
+    fn new_medium_is_old_large_in_pixels() {
+        use crate::style::Size;
+        // KAN-2499: Jan's old Large (84 px text, 7 px line) is the new Medium.
+        assert_eq!(Size::Medium.to_text_size(1.0), 84);
+        assert_eq!(Size::Medium.to_line_width(1.0), 7.0);
+        assert_eq!(Size::XSmall.to_line_width(1.0), 3.0);
     }
 
     #[test]

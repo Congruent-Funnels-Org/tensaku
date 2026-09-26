@@ -326,23 +326,23 @@ impl Size {
 
     pub fn to_text_size(self, size_factor: f32) -> i32 {
         match self {
-            Size::XSmall => (24.0 * size_factor) as i32,
-            Size::Small => (36.0 * size_factor) as i32,
-            Size::Medium => (54.0 * size_factor) as i32,
-            Size::Large => (84.0 * size_factor) as i32,
-            Size::XLarge => (120.0 * size_factor) as i32,
-            Size::XXLarge => (168.0 * size_factor) as i32,
+            Size::XSmall => (36.0 * size_factor) as i32,
+            Size::Small => (54.0 * size_factor) as i32,
+            Size::Medium => (84.0 * size_factor) as i32,
+            Size::Large => (120.0 * size_factor) as i32,
+            Size::XLarge => (168.0 * size_factor) as i32,
+            Size::XXLarge => (235.0 * size_factor) as i32,
         }
     }
 
     pub fn to_line_width(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 1.5 * size_factor,
-            Size::Small => 3.0 * size_factor,
-            Size::Medium => 5.0 * size_factor,
-            Size::Large => 7.0 * size_factor,
-            Size::XLarge => 11.0 * size_factor,
-            Size::XXLarge => 16.0 * size_factor,
+            Size::XSmall => 3.0 * size_factor,
+            Size::Small => 5.0 * size_factor,
+            Size::Medium => 7.0 * size_factor,
+            Size::Large => 11.0 * size_factor,
+            Size::XLarge => 16.0 * size_factor,
+            Size::XXLarge => 23.5 * size_factor,
         }
     }
 
@@ -350,24 +350,24 @@ impl Size {
     /// logical pixels at size_factor=1.0.
     pub fn to_arrow_tail_width(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 5.5 * size_factor,
-            Size::Small => 7.0 * size_factor,
-            Size::Medium => 11.5 * size_factor,
-            Size::Large => 14.5 * size_factor,
-            Size::XLarge => 19.5 * size_factor,
-            Size::XXLarge => 29.5 * size_factor,
+            Size::XSmall => 7.0 * size_factor,
+            Size::Small => 11.5 * size_factor,
+            Size::Medium => 14.5 * size_factor,
+            Size::Large => 19.5 * size_factor,
+            Size::XLarge => 29.5 * size_factor,
+            Size::XXLarge => 44.5 * size_factor,
         }
     }
 
     /// Visible body width at the head intersection for the Pointy arrow style.
     pub fn to_arrow_pointy_tail_width(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 8.0 * size_factor,
-            Size::Small => 10.0 * size_factor,
-            Size::Medium => 16.0 * size_factor,
-            Size::Large => 20.0 * size_factor,
-            Size::XLarge => 27.0 * size_factor,
-            Size::XXLarge => 41.0 * size_factor,
+            Size::XSmall => 10.0 * size_factor,
+            Size::Small => 16.0 * size_factor,
+            Size::Medium => 20.0 * size_factor,
+            Size::Large => 27.0 * size_factor,
+            Size::XLarge => 41.0 * size_factor,
+            Size::XXLarge => 62.5 * size_factor,
         }
     }
 
@@ -377,11 +377,11 @@ impl Size {
     pub fn to_arrow_pointy_tail_back_width(self, size_factor: f32) -> f32 {
         match self {
             Size::XSmall => 1.5 * size_factor,
-            Size::Small => 1.5 * size_factor,
-            Size::Medium => 1.75 * size_factor,
-            Size::Large => 2.0 * size_factor,
-            Size::XLarge => 2.5 * size_factor,
-            Size::XXLarge => 3.5 * size_factor,
+            Size::Small => 2.0 * size_factor,
+            Size::Medium => 2.0 * size_factor,
+            Size::Large => 2.5 * size_factor,
+            Size::XLarge => 3.5 * size_factor,
+            Size::XXLarge => 5.0 * size_factor,
         }
     }
 
@@ -390,12 +390,12 @@ impl Size {
     /// a steeper taper, smaller sizes stay nearly parallel.
     pub fn to_arrow_tail_back_width(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 1.5 * size_factor,
-            Size::Small => 2.5 * size_factor,
-            Size::Medium => 3.5 * size_factor,
-            Size::Large => 4.5 * size_factor,
-            Size::XLarge => 6.0 * size_factor,
-            Size::XXLarge => 8.5 * size_factor,
+            Size::XSmall => 2.5 * size_factor,
+            Size::Small => 3.5 * size_factor,
+            Size::Medium => 4.5 * size_factor,
+            Size::Large => 6.0 * size_factor,
+            Size::XLarge => 8.5 * size_factor,
+            Size::XXLarge => 12.0 * size_factor,
         }
     }
 
@@ -405,12 +405,12 @@ impl Size {
     /// natural backward bulge at the head's outer corner.
     pub fn to_arrow_head_length(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 15.0 * size_factor,
-            Size::Small => 20.0 * size_factor,
-            Size::Medium => 31.5 * size_factor,
-            Size::Large => 38.0 * size_factor,
-            Size::XLarge => 52.0 * size_factor,
-            Size::XXLarge => 78.5 * size_factor,
+            Size::XSmall => 20.0 * size_factor,
+            Size::Small => 31.5 * size_factor,
+            Size::Medium => 38.0 * size_factor,
+            Size::Large => 52.0 * size_factor,
+            Size::XLarge => 78.5 * size_factor,
+            Size::XXLarge => 118.5 * size_factor,
         }
     }
 
@@ -421,12 +421,12 @@ impl Size {
     /// a per-size table rather than derived from a single angle.
     pub fn to_arrow_head_full_height(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 14.0 * size_factor,
-            Size::Small => 18.5 * size_factor,
-            Size::Medium => 29.0 * size_factor,
-            Size::Large => 36.0 * size_factor,
-            Size::XLarge => 49.0 * size_factor,
-            Size::XXLarge => 75.0 * size_factor,
+            Size::XSmall => 18.5 * size_factor,
+            Size::Small => 29.0 * size_factor,
+            Size::Medium => 36.0 * size_factor,
+            Size::Large => 49.0 * size_factor,
+            Size::XLarge => 75.0 * size_factor,
+            Size::XXLarge => 115.0 * size_factor,
         }
     }
 
@@ -439,11 +439,11 @@ impl Size {
     pub fn to_arrow_curved_head_side(self, size_factor: f32) -> f32 {
         match self {
             Size::XSmall => 9.0 * size_factor,
-            Size::Small => 9.0 * size_factor,
-            Size::Medium => 15.0 * size_factor,
-            Size::Large => 19.0 * size_factor,
-            Size::XLarge => 26.0 * size_factor,
-            Size::XXLarge => 40.0 * size_factor,
+            Size::Small => 15.0 * size_factor,
+            Size::Medium => 19.0 * size_factor,
+            Size::Large => 26.0 * size_factor,
+            Size::XLarge => 40.0 * size_factor,
+            Size::XXLarge => 61.5 * size_factor,
         }
     }
 
@@ -455,23 +455,23 @@ impl Size {
     pub fn to_arrow_curved_shaft_width(self, size_factor: f32) -> f32 {
         match self {
             Size::XSmall => 3.0 * size_factor,
-            Size::Small => 3.0 * size_factor,
-            Size::Medium => 6.0 * size_factor,
-            Size::Large => 7.5 * size_factor,
-            Size::XLarge => 11.5 * size_factor,
-            Size::XXLarge => 18.5 * size_factor,
+            Size::Small => 6.0 * size_factor,
+            Size::Medium => 7.5 * size_factor,
+            Size::Large => 11.5 * size_factor,
+            Size::XLarge => 18.5 * size_factor,
+            Size::XXLarge => 30.0 * size_factor,
         }
     }
 
     /// Head length (along the shaft) for Pointy arrows. Per-size table.
     pub fn to_arrow_pointy_head_length(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 15.5 * size_factor,
-            Size::Small => 22.0 * size_factor,
-            Size::Medium => 34.5 * size_factor,
-            Size::Large => 43.0 * size_factor,
-            Size::XLarge => 59.0 * size_factor,
-            Size::XXLarge => 89.5 * size_factor,
+            Size::XSmall => 22.0 * size_factor,
+            Size::Small => 34.5 * size_factor,
+            Size::Medium => 43.0 * size_factor,
+            Size::Large => 59.0 * size_factor,
+            Size::XLarge => 89.5 * size_factor,
+            Size::XXLarge => 136.0 * size_factor,
         }
     }
 
@@ -481,23 +481,23 @@ impl Size {
     /// larger sizes.
     pub fn to_arrow_pointy_head_full_height(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 15.5 * size_factor,
-            Size::Small => 22.0 * size_factor,
-            Size::Medium => 33.0 * size_factor,
-            Size::Large => 41.5 * size_factor,
-            Size::XLarge => 56.5 * size_factor,
-            Size::XXLarge => 85.5 * size_factor,
+            Size::XSmall => 22.0 * size_factor,
+            Size::Small => 33.0 * size_factor,
+            Size::Medium => 41.5 * size_factor,
+            Size::Large => 56.5 * size_factor,
+            Size::XLarge => 85.5 * size_factor,
+            Size::XXLarge => 129.5 * size_factor,
         }
     }
 
     pub fn to_blur_factor(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 5.0 * size_factor,
-            Size::Small => 10.0 * size_factor,
-            Size::Medium => 20.0 * size_factor,
-            Size::Large => 30.0 * size_factor,
-            Size::XLarge => 45.0 * size_factor,
-            Size::XXLarge => 65.0 * size_factor,
+            Size::XSmall => 10.0 * size_factor,
+            Size::Small => 20.0 * size_factor,
+            Size::Medium => 30.0 * size_factor,
+            Size::Large => 45.0 * size_factor,
+            Size::XLarge => 65.0 * size_factor,
+            Size::XXLarge => 94.0 * size_factor,
         }
     }
 
@@ -508,23 +508,23 @@ impl Size {
     /// pixel and improve resistance to ML depixelation attacks.
     pub fn to_pixelate_cell_size(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 6.0 * size_factor,
-            Size::Small => 12.0 * size_factor,
-            Size::Medium => 22.0 * size_factor,
-            Size::Large => 34.0 * size_factor,
-            Size::XLarge => 50.0 * size_factor,
-            Size::XXLarge => 72.0 * size_factor,
+            Size::XSmall => 12.0 * size_factor,
+            Size::Small => 22.0 * size_factor,
+            Size::Medium => 34.0 * size_factor,
+            Size::Large => 50.0 * size_factor,
+            Size::XLarge => 72.0 * size_factor,
+            Size::XXLarge => 103.5 * size_factor,
         }
     }
 
     pub fn to_highlight_width(self, size_factor: f32) -> f32 {
         match self {
-            Size::XSmall => 8.0 * size_factor,
-            Size::Small => 15.0 * size_factor,
-            Size::Medium => 30.0 * size_factor,
-            Size::Large => 45.0 * size_factor,
-            Size::XLarge => 65.0 * size_factor,
-            Size::XXLarge => 90.0 * size_factor,
+            Size::XSmall => 15.0 * size_factor,
+            Size::Small => 30.0 * size_factor,
+            Size::Medium => 45.0 * size_factor,
+            Size::Large => 65.0 * size_factor,
+            Size::XLarge => 90.0 * size_factor,
+            Size::XXLarge => 124.5 * size_factor,
         }
     }
 }

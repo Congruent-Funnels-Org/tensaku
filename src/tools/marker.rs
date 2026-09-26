@@ -228,12 +228,12 @@ impl Drawable for Marker {
 /// own copy of these numbers would drift from the badge it promises.
 fn marker_text_size(size: crate::style::Size, factor: f32, scale: f32) -> f32 {
     let base = match size {
-        crate::style::Size::XSmall => 14.0,
-        crate::style::Size::Small => 22.0,
-        crate::style::Size::Medium => 36.0,
-        crate::style::Size::Large => 50.0,
-        crate::style::Size::XLarge => 70.0,
-        crate::style::Size::XXLarge => 96.0,
+        crate::style::Size::XSmall => 22.0,
+        crate::style::Size::Small => 36.0,
+        crate::style::Size::Medium => 50.0,
+        crate::style::Size::Large => 70.0,
+        crate::style::Size::XLarge => 96.0,
+        crate::style::Size::XXLarge => 131.5,
     };
     base * factor * scale
 }
